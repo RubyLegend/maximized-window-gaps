@@ -7,10 +7,10 @@ GNU General Public License v3.0
 */
 
 const config = {
-    gapTop: readConfig("gapTop", 2),
+    gapTop: KWin.readConfig("gapTop", 2),
     gapLeft: readConfig("gapLeft", 2),
     gapRight: readConfig("gapRight", 2),
-    gapBottom: readConfig("gapBottom", 27),
+    gapBottom: readConfig("gapBottom", 2),
     offsetTop: readConfig("offsetTop", 0),
     offsetLeft: readConfig("offsetLeft", 0),
     offsetRight: readConfig("offsetRight", 0),
@@ -103,13 +103,13 @@ function applyGaps(client) {
 
 function applyGapsArea(client) {
     let grid = getGrid(client);
-    let win = client.frameGeometry;
+    let win = Object.assign({}, client.frameGeometry);
 
     for (let i = 0; i < Object.keys(grid.left).length; i++) {
         let pos = Object.keys(grid.left)[i];
         let coords = grid.left[pos];
-        if (nearArea(win.left, coords, config.gapLeft)) {
-            let diff = coords.gapped - win.left;
+        if (nearArea(win.x, coords, config.gapLeft)) {
+            let diff = coords.gapped - win.x;
             win.width -= diff;
             win.x += diff;
             break;
@@ -119,8 +119,8 @@ function applyGapsArea(client) {
     for (let i = 0; i < Object.keys(grid.right).length; i++) {
         let pos = Object.keys(grid.right)[i];
         let coords = grid.right[pos];
-        if (nearArea(win.right, coords, config.gapRight)) {
-            let diff = win.right - coords.gapped;
+        if (nearArea(win.x + win.width, coords, config.gapRight)) {
+            let diff = win.x + win.width - coords.gapped;
             win.width -= diff;
             break;
         }
@@ -129,8 +129,8 @@ function applyGapsArea(client) {
     for (let i = 0; i < Object.keys(grid.top).length; i++) {
         let pos = Object.keys(grid.top)[i];
         let coords = grid.top[pos];
-        if (nearArea(win.top, coords, config.gapTop)) {
-            let diff = coords.gapped - win.top;
+        if (nearArea(win.y, coords, config.gapTop)) {
+            let diff = coords.gapped - win.y;
             win.height -= diff;
             win.y += diff;
             break;
@@ -140,12 +140,14 @@ function applyGapsArea(client) {
     for (let i = 0; i < Object.keys(grid.bottom).length; i++) {
         let pos = Object.keys(grid.bottom)[i];
         let coords = grid.bottom[pos];
-        if (nearArea(win.bottom, coords, config.gapBottom)) {
-            let diff = win.bottom - coords.gapped;
+        if (nearArea(win.y + win.height, coords, config.gapBottom)) {
+            let diff = win.y + win.height - coords.gapped;
             win.height -= diff;
             break;
         }
     }
+
+    client.frameGeometry = win;
 }
 
 function getArea(client) {
@@ -156,9 +158,9 @@ function getArea(client) {
         width: clientArea.width - config.offsetLeft - config.offsetRight,
         height: clientArea.height - config.offsetTop - config.offsetBottom,
         left: clientArea.x + config.offsetLeft,
-        right: clientArea.x + clientArea.width - config.offsetRight - 1,
+        right: clientArea.x + clientArea.width - config.offsetRight,
         top: clientArea.y + config.offsetTop,
-        bottom: clientArea.y + clientArea.height - config.offsetBottom - 1,
+        bottom: clientArea.y + clientArea.height - config.offsetBottom,
     };
 }
 
