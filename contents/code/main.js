@@ -7,7 +7,7 @@ GNU General Public License v3.0
 */
 
 const config = {
-    gapTop: KWin.readConfig("gapTop", 2),
+    gapTop: readConfig("gapTop", 2),
     gapLeft: readConfig("gapLeft", 2),
     gapRight: readConfig("gapRight", 2),
     gapBottom: readConfig("gapBottom", 2),
@@ -103,15 +103,16 @@ function applyGaps(client) {
 
 function applyGapsArea(client) {
     let grid = getGrid(client);
-    let win = Object.assign({}, client.frameGeometry);
+    let win = getArea(client);
 
     for (let i = 0; i < Object.keys(grid.left).length; i++) {
         let pos = Object.keys(grid.left)[i];
         let coords = grid.left[pos];
-        if (nearArea(win.x, coords, config.gapLeft)) {
-            let diff = coords.gapped - win.x;
+        if (nearArea(win.left, coords, config.gapLeft)) {
+            let diff = coords.gapped - win.left;
             win.width -= diff;
             win.x += diff;
+	    console.log("grid.left diff:", diff, coords.gapped);
             break;
         }
     }
@@ -119,9 +120,10 @@ function applyGapsArea(client) {
     for (let i = 0; i < Object.keys(grid.right).length; i++) {
         let pos = Object.keys(grid.right)[i];
         let coords = grid.right[pos];
-        if (nearArea(win.x + win.width, coords, config.gapRight)) {
-            let diff = win.x + win.width - coords.gapped;
+        if (nearArea(win.right, coords, config.gapRight)) {
+            let diff = win.right - coords.gapped;
             win.width -= diff;
+	    console.log("grid.right diff:", diff, coords.gapped);
             break;
         }
     }
@@ -129,10 +131,11 @@ function applyGapsArea(client) {
     for (let i = 0; i < Object.keys(grid.top).length; i++) {
         let pos = Object.keys(grid.top)[i];
         let coords = grid.top[pos];
-        if (nearArea(win.y, coords, config.gapTop)) {
+        if (nearArea(win.top, coords, config.gapTop)) {
             let diff = coords.gapped - win.y;
             win.height -= diff;
             win.y += diff;
+	    console.log("grid.top diff:", diff, coords.gapped);
             break;
         }
     }
@@ -140,27 +143,28 @@ function applyGapsArea(client) {
     for (let i = 0; i < Object.keys(grid.bottom).length; i++) {
         let pos = Object.keys(grid.bottom)[i];
         let coords = grid.bottom[pos];
-        if (nearArea(win.y + win.height, coords, config.gapBottom)) {
-            let diff = win.y + win.height - coords.gapped;
+        if (nearArea(win.bottom, coords, config.gapBottom)) {
+            let diff = win.bottom - coords.gapped;
             win.height -= diff;
+	    console.log("grid.bottom diff:", diff, coords.gapped);
             break;
         }
     }
 
+    console.log("Applying win geometry:", win.x, win.y, win.width, win.height);
     client.frameGeometry = win;
 }
 
 function getArea(client) {
-    let clientArea = workspace.clientArea(KWin.MaximizeArea, client);
     return {
-        x: clientArea.x + config.offsetLeft,
-        y: clientArea.y + config.offsetTop,
-        width: clientArea.width - config.offsetLeft - config.offsetRight,
-        height: clientArea.height - config.offsetTop - config.offsetBottom,
-        left: clientArea.x + config.offsetLeft,
-        right: clientArea.x + clientArea.width - config.offsetRight,
-        top: clientArea.y + config.offsetTop,
-        bottom: clientArea.y + clientArea.height - config.offsetBottom,
+        x: client.pos.x + config.offsetLeft,
+        y: client.pos.y + config.offsetTop,
+        width: client.size.width - config.offsetLeft - config.offsetRight,
+        height: client.size.height - config.offsetTop - config.offsetBottom,
+        left: client.pos.x + config.offsetLeft,
+        right: client.pos.x + client.size.width - config.offsetRight,
+        top: client.pos.y + config.offsetTop,
+        bottom: client.pos.y + client.size.height - config.offsetBottom,
     };
 }
 
